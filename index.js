@@ -44,7 +44,22 @@ async function calculateNextPostTime() {
 }
 
 async function handleNewPost(postObject) {
-  postQueue.push(postObject);
+  const originalText = postObject.text || postObject.caption || '';
+  const footerText = "\n\n📌 Acesse nosso site:\ncornosbrasil.com";
+  const fullText = originalText + footerText;
+  const videoId = postObject.video ? postObject.video.file_id : null;
+
+  // Verificar se o post já existe no banco de dados
+  const postExists = await db.checkIfPostExists(fullText, videoId);
+
+  if (postExists) {
+    console.log('Post duplicado detectado e ignorado:', fullText);
+    // Opcional: enviar uma mensagem de volta ao proprietário informando sobre o duplicado
+    // ctx.reply('Post duplicado detectado e ignorado.');
+    return;
+  }
+
+  postQueue.push({ text: fullText, videoId: videoId });
   if (!isProcessingQueue) {
     processPostQueue();
   }
@@ -57,25 +72,18 @@ async function processPostQueue() {
   }
 
   isProcessingQueue = true;
-  const postObject = postQueue.shift();
-
-  const originalText = postObject.text || postObject.caption || '';
-  const footerText = "\n\nAcesse nosso perfil para mais videos em nosso fixado...";
-  const postData = {
-    text: originalText + footerText,
-    videoId: postObject.video ? postObject.video.file_id : null,
-  };
+  const postData = postQueue.shift(); // postData já contém fullText e videoId
 
   const postAt = await calculateNextPostTime();
   await db.addPostToQueue(postData, postAt);
-  console.log(`Post added to the database queue, scheduled for ${postAt.toLocaleString()}`);
+  console.log(`Post adicionado à fila do banco de dados, agendado para ${postAt.toLocaleString()}`);
 
-  // If no job is scheduled, or the new post is sooner than the scheduled one, reschedule.
+  // Se nenhum trabalho estiver agendado, ou o novo post for mais cedo que o agendado, reagendar.
   if (!scheduledJob || (scheduledJob && postAt < scheduledJob.nextInvocation())) {
     scheduleNextPost();
   }
 
-  // Process the next item in the queue
+  // Processar o próximo item na fila
   processPostQueue();
 }
 

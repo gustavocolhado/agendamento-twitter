@@ -100,15 +100,34 @@ async function getPostedReports() {
   return posts;
 }
 
+async function checkIfPostExists(text, videoId) {
+  const pool = await getPool();
+  let query = 'SELECT id FROM posts WHERE text = ?';
+  let params = [text];
+
+  if (videoId) {
+    query += ' AND videoId = ?';
+    params.push(videoId);
+  } else {
+    query += ' AND videoId IS NULL';
+  }
+
+  console.log('Checking for duplicate post with text:', text.substring(0, 50) + '...', 'and videoId:', videoId);
+  const [rows] = await pool.query(query, params);
+  console.log('Duplicate check result:', rows.length > 0 ? 'Found' : 'Not found');
+  return rows.length > 0;
+}
+
 module.exports = {
   setupDb,
   addPostToQueue,
   getNextPostFromQueue,
-  markPostAsPosted, // Renomeado
+  markPostAsPosted,
   getAllPostsFromQueue,
   getLastPostTime,
   getPostById,
   updatePostTime,
-  recordPostStatus, // Novo
-  getPostedReports, // Novo
+  recordPostStatus,
+  getPostedReports,
+  checkIfPostExists, // Novo
 };
