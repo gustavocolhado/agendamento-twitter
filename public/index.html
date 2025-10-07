@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fila de Agendamento</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Gerenciador de Agendamentos</h1>
+
+  <div class="tabs">
+    <button class="tab-button active" onclick="openTab('scheduled-queue')">Fila de Agendamento</button>
+    <button class="tab-button" onclick="openTab('posted-reports')">Posts Agendados e Relatórios</button>
+  </div>
+
+  <div id="scheduled-queue" class="tab-content active">
+    <h2>Fila de Agendamento de Posts</h2>
+  <div id="posts-container"></div>
+  </div> <!-- Fecha scheduled-queue -->
+
+  <div id="posted-reports" class="tab-content">
+    <h2>Posts Agendados e Relatórios</h2>
+    <div id="reports-container"></div>
+  </div>
+
+  <script>
+    const postsContainer = document.getElementById('posts-container');
+    const reportsContainer = document.getElementById('reports-container');
+    const videoPlayerModal = document.getElementById('video-player-modal');
+    const videoPlayer = document.getElementById('video-player');
+    const closeVideoPlayerButton = document.getElementById('close-video-player');
+
+    closeVideoPlayerButton.onclick = () => {
+      videoPlayer.pause();
+      videoPlayer.removeAttribute('src'); // Limpa a fonte do vídeo
+      videoPlayerModal.close();
+    };
+
+    function openTab(tabName) {
+      const tabContents = document.getElementsByClassName('tab-content');
+      for (let i = 0; i < tabContents.length; i++) {
+        tabContents[i].classList.remove('active');
+      }
+      const tabButtons = document.getElementsByClassName('tab-button');
+      for (let i = 0; i < tabButtons.length; i++) {
+        tabButtons[i].classList.remove('active');
+      }
+      document.getElementById(tabName).classList.add('active');
+      event.currentTarget.classList.add('active');
+
+      if (tabName === 'scheduled-queue') {
+        fetchPosts();
+      } else if (tabName === 'posted-reports') {
+        fetchReports();
+      }
+    }
+
+    async function fetchPosts() {
+      try {
+        const response = await fetch('/api/posts');
+        const posts = await response.json();
+        
+        postsContainer.innerHTML = ''; // Clear the container
+
+        if (posts.length === 0) {
+          postsContainer.innerHTML = '<p>A fila de agendamento está vazia.</p>';
+          return;
+        }
+
+        posts.forEach(post => {
+          const postElement = document.createElement('div');
+          postElement.className = 'post';
+          
+          const textElement = document.createElement('p');
+          textElement.innerText = post.text;
+          postElement.appendChild(textElement);
+
+          if (post.videoId) {
+            const videoElement = document.createElement('button');
+            videoElement.className = 'video-tag';
+            videoElement.innerText = 'Abrir Vídeo';
+            videoElement.onclick = () => openVideo(post.videoId);
+            postElement.appendChild(videoElement);
+          }
+
+          const dateElement = document.createElement('small');
+          dateElement.innerText = `Programado para: ${new Date(post.postAt).toLocaleString()}`;
+          postElement.appendChild(dateElement);
+
+          const postNowButton = document.createElement('button');
+          postNowButton.innerText = 'Postar Agora';
+          postNowButton.className = 'post-now-btn';
+          postNowButton.onclick = () => postNow(post.id);
+          postElement.appendChild(postNowButton);
+
+          postsContainer.appendChild(postElement);
+        });
+      } catch (error) {
+        console.error('Failed to fetch posts:', error);
+        postsContainer.innerHTML = '<p>Erro ao carregar a fila de agendamento.</p>';
+      }
+    }
+
+    async function postNow(postId) {
+      try {
+        const response = await fetch(`/api/posts/${postId}/now`, { method: 'POST' });
+        if (response.ok) {
+          fetchPosts(); // Refresh the list
+        } else {
+          console.error('Failed to post now:', await response.text());
+        }
+      } catch (error) {
+        console.error('Error in postNow:', error);
+      }
+    }
+
+    async function fetchReports() {
+      try {
+        const response = await fetch('/api/reports'); // Novo endpoint para relatórios
+        const reports = await response.json();
+
+        reportsContainer.innerHTML = ''; // Limpa o container
+
+        if (reports.length === 0) {
+          reportsContainer.innerHTML = '<p>Nenhum relatório disponível.</p>';
+          return;
+        }
+
+        reports.forEach(report => {
+          const reportElement = document.createElement('div');
+          reportElement.className = 'report-item';
+
+          const postText = document.createElement('h3');
+          postText.innerText = `Post: ${report.text}`;
+          reportElement.appendChild(postText);
+
+          const postDate = document.createElement('p');
+          postDate.innerText = `Postado em: ${new Date(report.postedAt).toLocaleString()}`;
+          reportElement.appendChild(postDate);
+
+          const statusList = document.createElement('ul');
+          report.statuses.forEach(status => {
+            const statusItem = document.createElement('li');
+            statusItem.className = status.success ? 'status-success' : 'status-failure';
+            statusItem.innerText = `Conta ${status.accountIndex}: ${status.success ? 'Sucesso' : 'Falha'} - ${status.message || ''}`;
+            statusList.appendChild(statusItem);
+          });
+          reportElement.appendChild(statusList);
+
+          reportsContainer.appendChild(reportElement);
+        });
+
+      } catch (error) {
+        console.error('Failed to fetch reports:', error);
+        reportsContainer.innerHTML = '<p>Erro ao carregar relatórios.</p>';
+      }
+    }
+
+    function openVideo(videoId) {
+      videoPlayer.src = `/api/video/${videoId}`;
+      videoPlayerModal.showModal();
+      videoPlayer.play();
+    }
+
+    // Fetch posts on page load and then every 10 seconds
+    openTab('scheduled-queue'); // Abre a aba de fila de agendamento por padrão
+    setInterval(() => {
+      if (document.getElementById('scheduled-queue').classList.contains('active')) {
+        fetchPosts();
+      } else if (document.getElementById('posted-reports').classList.contains('active')) {
+        fetchReports();
+      }
+    }, 10000);
+  </script>
+</body>
+</html>

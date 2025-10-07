@@ -1,0 +1,25 @@
+{
+  "name": "agendamento-telegram",
+  "version": "1.0.0",
+  "description": "Um sistema para agendar posts no Twitter a partir de um canal privado no Telegram.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "telegram",
+    "twitter",
+    "agendamento"
+  ],
+  "author": "Sixth",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.12.2",
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "mysql2": "^3.15.1",
+    "node-schedule": "^2.1.1",
+    "telegraf": "^4.16.3",
+    "twitter-api-v2": "^1.17.1"
+  }
+}
