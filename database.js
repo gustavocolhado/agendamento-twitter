@@ -16,8 +16,8 @@ async function setupDb() {
     await connection.query(`
       CREATE TABLE IF NOT EXISTS posts (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        text TEXT,
-        videoId VARCHAR(255),
+        text TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+        videoId VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         postAt DATETIME,
         postedAt DATETIME NULL DEFAULT NULL
@@ -49,7 +49,7 @@ async function addPostToQueue(post, postAt) {
 
 async function getNextPostFromQueue() {
   const pool = await getPool();
-  const [rows] = await pool.query('SELECT * FROM posts ORDER BY postAt ASC LIMIT 1');
+  const [rows] = await pool.query('SELECT * FROM posts WHERE postedAt IS NULL ORDER BY postAt ASC LIMIT 1');
   return rows[0];
 }
 
@@ -66,7 +66,7 @@ async function getLastPostTime() {
 
 async function getAllPostsFromQueue() {
   const pool = await getPool();
-  const [rows] = await pool.query('SELECT * FROM posts ORDER BY postAt ASC');
+  const [rows] = await pool.query('SELECT * FROM posts WHERE postedAt IS NULL ORDER BY postAt ASC');
   return rows;
 }
 
@@ -112,9 +112,34 @@ async function checkIfPostExists(text, videoId) {
     query += ' AND videoId IS NULL';
   }
 
-  console.log('Checking for duplicate post with text:', text.substring(0, 50) + '...', 'and videoId:', videoId);
+  console.log('Checking for duplicate post (any account) with text:', text.substring(0, 50) + '...', 'and videoId:', videoId);
   const [rows] = await pool.query(query, params);
-  console.log('Duplicate check result:', rows.length > 0 ? 'Found' : 'Not found');
+  console.log('Duplicate check (any account) result:', rows.length > 0 ? 'Found' : 'Not found');
+  return rows.length > 0;
+}
+
+async function checkIfPostWasSuccessfullyPostedToAccount(text, videoId, accountIndex) {
+  const pool = await getPool();
+  let query = `
+    SELECT ps.id
+    FROM post_statuses ps
+    JOIN posts p ON ps.postId = p.id
+    WHERE p.text = ?
+      AND ps.accountIndex = ?
+      AND ps.success = TRUE
+  `;
+  let params = [text, accountIndex];
+
+  if (videoId) {
+    query += ' AND p.videoId = ?';
+    params.push(videoId);
+  } else {
+    query += ' AND p.videoId IS NULL';
+  }
+
+  console.log(`Checking if post was successfully posted to account ${accountIndex} with text:`, text.substring(0, 50) + '...', 'and videoId:', videoId);
+  const [rows] = await pool.query(query, params);
+  console.log(`Post to account ${accountIndex} check result:`, rows.length > 0 ? 'Found' : 'Not found');
   return rows.length > 0;
 }
 
@@ -129,5 +154,6 @@ module.exports = {
   updatePostTime,
   recordPostStatus,
   getPostedReports,
-  checkIfPostExists, // Novo
+  checkIfPostExists,
+  checkIfPostWasSuccessfullyPostedToAccount, // Nova função
 };

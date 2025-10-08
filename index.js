@@ -121,15 +121,22 @@ async function postToTwitter(post) {
       let success = false;
       let message = '';
       try {
-        if (post.videoId) {
-          await uploadVideoAndPost(post, client, index + 1);
+        const alreadyPosted = await db.checkIfPostWasSuccessfullyPostedToAccount(post.text, post.videoId, index + 1);
+        if (alreadyPosted) {
+          console.log(`[Account #${index + 1}] Post com o mesmo conteúdo já foi postado com sucesso. Ignorando.`);
+          success = true; // Considerar como sucesso para não tentar novamente
+          message = 'Post duplicado para esta conta, ignorado.';
         } else {
-          console.log(`[Account #${index + 1}] Posting text tweet...`);
-          await client.v2.tweet(post.text);
-          console.log(`[Account #${index + 1}] Post successful!`);
+          if (post.videoId) {
+            await uploadVideoAndPost(post, client, index + 1);
+          } else {
+            console.log(`[Account #${index + 1}] Posting text tweet...`);
+            await client.v2.tweet(post.text);
+            console.log(`[Account #${index + 1}] Post successful!`);
+          }
+          success = true;
+          message = 'Postado com sucesso.';
         }
-        success = true;
-        message = 'Postado com sucesso.';
       } catch (error) {
         console.error(`[Account #${index + 1}] Error posting tweet:`, error.message || error);
         success = false;
