@@ -18,11 +18,24 @@ async function setupDb() {
         id INT AUTO_INCREMENT PRIMARY KEY,
         text TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
         videoId VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+        videoPath VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         postAt DATETIME,
         postedAt DATETIME NULL DEFAULT NULL
       );
     `);
+    // Adicionar coluna videoPath se não existir
+    await connection.query(`
+      ALTER TABLE posts
+      ADD COLUMN videoPath VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL;
+    `).catch(err => {
+      if (err.code === 'ER_DUP_FIELDNAME') {
+        console.log('Column videoPath already exists, skipping ALTER TABLE.');
+      } else {
+        throw err;
+      }
+    });
+
     await connection.query(`
       CREATE TABLE IF NOT EXISTS post_statuses (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -42,14 +55,14 @@ async function setupDb() {
 async function addPostToQueue(post, postAt) {
   const pool = await getPool();
   await pool.query(
-    'INSERT INTO posts (text, videoId, postAt) VALUES (?, ?, ?)',
-    [post.text, post.videoId, postAt]
+    'INSERT INTO posts (text, videoId, videoPath, postAt) VALUES (?, ?, ?, ?)',
+    [post.text, post.videoId, post.videoPath, postAt]
   );
 }
 
 async function getNextPostFromQueue() {
   const pool = await getPool();
-  const [rows] = await pool.query('SELECT * FROM posts WHERE postedAt IS NULL ORDER BY postAt ASC LIMIT 1');
+  const [rows] = await pool.query('SELECT id, text, videoId, videoPath, postAt FROM posts WHERE postedAt IS NULL ORDER BY postAt ASC LIMIT 1');
   return rows[0];
 }
 
@@ -66,13 +79,13 @@ async function getLastPostTime() {
 
 async function getAllPostsFromQueue() {
   const pool = await getPool();
-  const [rows] = await pool.query('SELECT * FROM posts WHERE postedAt IS NULL ORDER BY postAt ASC');
+  const [rows] = await pool.query('SELECT id, text, videoId, videoPath, postAt FROM posts WHERE postedAt IS NULL ORDER BY postAt ASC');
   return rows;
 }
 
 async function getPostById(id) {
   const pool = await getPool();
-  const [rows] = await pool.query('SELECT * FROM posts WHERE id = ?', [id]);
+  const [rows] = await pool.query('SELECT id, text, videoId, videoPath, postAt FROM posts WHERE id = ?', [id]);
   return rows[0];
 }
 

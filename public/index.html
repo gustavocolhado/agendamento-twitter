@@ -27,15 +27,6 @@
   <script>
     const postsContainer = document.getElementById('posts-container');
     const reportsContainer = document.getElementById('reports-container');
-    const videoPlayerModal = document.getElementById('video-player-modal');
-    const videoPlayer = document.getElementById('video-player');
-    const closeVideoPlayerButton = document.getElementById('close-video-player');
-
-    closeVideoPlayerButton.onclick = () => {
-      videoPlayer.pause();
-      videoPlayer.removeAttribute('src'); // Limpa a fonte do vídeo
-      videoPlayerModal.close();
-    };
 
     function openTab(tabName) {
       const tabContents = document.getElementsByClassName('tab-content');
@@ -158,9 +149,7 @@
     }
 
     function openVideo(videoId) {
-      videoPlayer.src = `/api/video/${videoId}`;
-      videoPlayerModal.showModal();
-      videoPlayer.play();
+      window.open(`/video.html?id=${videoId}`, '_blank');
     }
 
     // Fetch posts on page load and then every 10 seconds

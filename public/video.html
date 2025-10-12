@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizar Vídeo</title>
+  <style>
+    body {
+      background-color: #1c1e21;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      overflow: hidden; /* Prevent scrollbars */
+    }
+    video {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <video id="video-player" controls autoplay loop></video>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const videoId = urlParams.get('id');
+      const videoPlayer = document.getElementById('video-player');
+
+      if (videoId) {
+        videoPlayer.src = `/api/video/${videoId}`;
+        videoPlayer.play();
+      } else {
+        console.error('No video ID found in URL.');
+        // Optionally display an error message to the user
+      }
+    });
+  </script>
+</body>
+</html>

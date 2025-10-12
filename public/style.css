@@ -111,46 +111,6 @@ h2 {
   background-color: #36a420;
 }
 
-/* Estilos para o modal do player de vídeo */
-#video-player-modal {
-  border: none;
-  padding: 0;
-  background: rgba(0, 0, 0, 0.8);
-  border-radius: 8px;
-  max-width: 90vw;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-#video-player-modal::backdrop {
-  background: rgba(0, 0, 0, 0.6);
-}
-
-#video-player {
-  max-width: 100%;
-  max-height: 80vh;
-  display: block;
-  margin-bottom: 10px;
-}
-
-#close-video-player {
-  background-color: #f44336;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 10px;
-}
-
-#close-video-player:hover {
-  background-color: #d32f2f;
-}
-
 /* Estilos para os relatórios */
 .report-item {
   background-color: #f9f9f9;
