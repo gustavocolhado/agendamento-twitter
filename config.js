@@ -4,7 +4,7 @@ module.exports = {
   telegram: {
     botToken: process.env.TELEGRAM_BOT_TOKEN,
     channelId: process.env.TELEGRAM_CHANNEL_ID,
-    ownerId: [process.env.TELEGRAM_OWNER_ID_1, process.env.TELEGRAM_OWNER_ID_2],
+    ownerId: process.env.TELEGRAM_OWNER_ID,
   },
   twitter: [],
   database: {
