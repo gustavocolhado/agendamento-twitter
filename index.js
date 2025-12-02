@@ -45,7 +45,7 @@ async function calculateNextPostTime() {
 
 async function handleNewPost(postObject) {
   const originalText = postObject.text || postObject.caption || '';
-  const footerText = "\n\n📌 Acesse nosso site:\ncornosbrasil.com";
+  const footerText = "\n\n📌 Acesse nosso site:\ncornosbrasil.com.br";
   const fullText = originalText + footerText;
   const videoId = postObject.video ? postObject.video.file_id : null;
   let videoPath = null;
